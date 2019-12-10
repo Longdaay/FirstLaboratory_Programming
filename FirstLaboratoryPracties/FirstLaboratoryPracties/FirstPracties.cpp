@@ -1,3 +1,4 @@
+//Лабораторная работа № 1 - работа с двоичным представлением чисел в памяти ПК
 #include <iostream>
 #include <climits>
 #include <Windows.h>
@@ -9,15 +10,25 @@ namespace s // пространство имен s для объединения типов данных для вводимого чи
 		long int digit;
 		float digit_f;
 	};
+	static union
+	{
+		int dig_int[2];
+		double dig_db;
+	};
 }
+
+const int NotUsed = system("color 70");
+
 int count_qual = 0; // значение, на которое необходимо изменить заполнение массива
 short param_f = FALSE; // переменная, которая определяет выбранный тип данных
+bool format = false;
 
 void SetColor(int text, int bg) //Функция смены цвета, взятая из Интернета
 {
 	HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
 	SetConsoleTextAttribute(hStdOut, (WORD)((bg << 4) | text));
 }
+
 void chooseFormat() // функция проверки значения в зависимости от выбранного формата
 {
 	using std::cout;
@@ -31,7 +42,7 @@ void chooseFormat() // функция проверки значения в зависимости от выбранного фор
 		switch (value[0]) // проверям выбранный формат, взяв первый символ переменной value
 		{
 		case '1':
-			::count_qual = 112; // устанавливаем глобальное значение для изменения диапазона массива 
+			count_qual = 48; // устанавливаем глобальное значение для изменения диапазона массива 
 			cout << "Ваш выбор short int" << '\n';
 			if (s::digit < SHRT_MIN or s::digit > SHRT_MAX) // проверяем входит ли вводимое значение в рамки выбранного формата
 			{
@@ -41,7 +52,7 @@ void chooseFormat() // функция проверки значения в зависимости от выбранного фор
 			break;
 
 		case '2':
-			::count_qual = 96; // устанавливаем глобальное значение для изменения диапазона массива 
+			count_qual = 32; // устанавливаем глобальное значение для изменения диапазона массива 
 			cout << "Ваш выбор int" << '\n';
 			if (s::digit < INT_MIN or s::digit > INT_MAX) // проверяем входит ли вводимое значение в рамки выбранного формата
 			{
@@ -50,7 +61,7 @@ void chooseFormat() // функция проверки значения в зависимости от выбранного фор
 			}
 			break;
 		case '3':
-			::count_qual = 96; // устанавливаем глобальное значение для изменения диапазона массива 
+			count_qual = 32; // устанавливаем глобальное значение для изменения диапазона массива 
 			cout << "Ваш выбор unsigned int" << '\n';
 			if (s::digit < 0 or s::digit > UINT_MAX) // проверяем входит ли вводимое значение в рамки выбранного формата
 			{
@@ -69,6 +80,7 @@ void chooseFormat() // функция проверки значения в зависимости от выбранного фор
 		chooseFormat();
 	}
 }
+
 void chooseFormat_f() // функция проверки значения в зависимости от выбранного формата
 {
 	using std::cout;
@@ -82,24 +94,15 @@ void chooseFormat_f() // функция проверки значения в зависимости от выбранного ф
 		switch (value[0]) // проверям выбранный формат, взяв первый символ переменной value
 		{
 		case '1':
-			::count_qual = 96; // устанавливаем глобальное значение для изменения диапазона массива
-			::param_f = 8; // определяет выбранный тип данных float
+			count_qual = 32; // устанавливаем глобальное значение для изменения диапазона массива
+			param_f = 8; // определяет выбранный тип данных float
 			cout << "Ваш выбор float" << '\n';
-			if (s::digit < FLT_MIN or s::digit > FLT_MAX) // проверяем входит ли вводимое значение в рамки выбранного формата
-			{
-				cout << "Число выходит за пределы выбранного формата. Попробуйте выбрать другой" << '\n'; // недопустимое значение
-				chooseFormat_f();
-			}
 			break;
 
 		case '2':
-			::param_f = 11; // определяет выбранный тип данных double
+			param_f = 12; // определяет выбранный тип данных double
+			format = true;
 			cout << "Ваш выбор double" << '\n';
-			if (s::digit < DBL_MIN or s::digit > DBL_MAX) // проверяем входит ли вводимое значение в рамки выбранного формата
-			{
-				cout << "Число выходит за пределы выбранного формата. Попробуйте выбрать другой" << '\n'; // недопустимое значение
-				chooseFormat_f();
-			}
 			break;
 		default:
 			cout << "Число введено неверное. Введите номер заново" << '\n'; // если выбранный формат не соответсвует ни одному из предложенных
@@ -112,6 +115,7 @@ void chooseFormat_f() // функция проверки значения в зависимости от выбранного ф
 		chooseFormat_f();
 	}
 }
+
 void mask_digit(const unsigned short qual, int revers_array[], int number_of_bit, bool result)
 {
 	using std::cout;
@@ -123,6 +127,25 @@ void mask_digit(const unsigned short qual, int revers_array[], int number_of_bit
 	}
 	cout << '\n'; // перевод строки
 }
+
+void mask_digit_f(const unsigned short qual, int revers_array[], int number_of_bit, bool result)
+{
+	using std::cout;
+	// делаем слепок числа с помощью побитового сдвига и умножения в цикле
+	for (number_of_bit; number_of_bit < 33; number_of_bit++) // номер бита для сдвига, сравниваем номер бита с допустимым значением диапазона массива, добавляем 1 после каждой итерации
+	{
+		result = s::dig_int[0] & (1U << number_of_bit); // производим сдвиг числа и записываем бит в переменную
+		revers_array[number_of_bit] = result; // записываем в массив полученное значение 
+	}
+	cout << '\n'; // перевод строки
+	// делаем слепок числа с помощью побитового сдвига и умножения в цикле
+	for (number_of_bit = 33; number_of_bit < 64; number_of_bit++) // номер бита для сдвига, сравниваем номер бита с допустимым значением диапазона массива, добавляем 1 после каждой итерации
+	{
+		result = s::dig_int[1] & (1U << number_of_bit); // производим сдвиг числа и записываем бит в переменную
+		revers_array[number_of_bit] = result; // записываем в массив полученное значение 
+	}
+}
+
 void print_revers_array(const unsigned short qual, int revers_array[])
 {
 	using std::cout;
@@ -143,14 +166,15 @@ void print_revers_array(const unsigned short qual, int revers_array[])
 		else
 		{
 			counter = 1; // устанавливаем в истину, как только получили первый значащий разряд
-			SetColor(14, 0); // устанавливаем цвет шрифта в желтый
+			SetColor(3, 7); // устанавливаем цвет шрифта в желтый
 			cout << revers_array[i]; //вывод значения бита
 		}
 		if (i % 8 == 0) // отделяем после 8го значения пробелом для удобного восприятия числа
 			cout << " ";
 	}
-	SetColor(7, 0); // возвращаем цвет шрифта в белый
+	SetColor(0, 7); // возвращаем цвет шрифта в белый
 }
+
 void print_revers_array_f(const unsigned short qual, int revers_array[])
 {
 	using std::cout;
@@ -166,19 +190,55 @@ void print_revers_array_f(const unsigned short qual, int revers_array[])
 		}
 		else if (i + param_f > qual - 1 - count_qual) // выделяем первые биты порядка вещественного цветом и выводим. После того, как условие станет ложным - выделяем биты мантиссы другим цветом и выводим 
 		{
-			SetColor(11, 0);
+			SetColor(5, 7);
 			cout << revers_array[i]; // вывод значения бита
 		}
 		else
 		{
-			SetColor(12, 0);
+			SetColor(12, 7);
 			cout << revers_array[i]; //вывод значения бита
 		}
-		if (i % 8 == 0) // отделяем после 8го значения пробелом для удобного восприятия числа
+		if (format)
+		{
+			if (i == 52)
+				cout << " ";
+		}
+		else
+			if (i == 24)
+				cout << " ";
+	}
+	SetColor(0, 7); // возвращаем цвет шрифта в белый
+}
+
+void print_revers_array_db(const unsigned short qual, int revers_array[])
+{
+	using std::cout;
+	cout << "Двоичное представление числа: " << '\n' << '\n';
+	bool counter = 0; // значение, которое позволяет контролировать первый значащий разряд числа
+	// выводим на экран слепок числа,  перевернув его
+	for (int i = qual - 1; i >= 0; i = i - 1) // берем последний бит в допустимом значении диапазона массива, цикл будет проходить до последнего значения бита, снижаем на 1 после каждой итерации
+	{
+		if (i == qual - 1) // отделяем знак от числа единожды
+		{
+			cout << revers_array[i]; // вывод значения бита
+			cout << " "; // пробел отделяющий знак числа
+		}
+		else if (i + param_f > qual - 1) // выделяем первые биты порядка вещественного цветом и выводим. После того, как условие станет ложным - выделяем биты мантиссы другим цветом и выводим 
+		{
+			SetColor(5, 7);
+			cout << revers_array[i]; // вывод значения бита
+		}
+		else
+		{
+			SetColor(12, 7);
+			cout << revers_array[i]; //вывод значения бита
+		}
+		if (i == 52)
 			cout << " ";
 	}
-	SetColor(7, 0); // возвращаем цвет шрифта в белый
+	SetColor(0, 7); // возвращаем цвет шрифта в белый
 }
+
 long int checkdigit(bool param)
 {
 	using std::cout;
@@ -186,10 +246,7 @@ long int checkdigit(bool param)
 	while (true)
 	{
 		// вводим число, которое хотим представить в двоичной форме
-		if (param == FALSE) // в зависимости от части задания проверям целое или вещественное число
-			cin >> s::digit; // число целое
-		else
-			cin >> s::digit_f; // число вещественное
+		cin >> s::digit; // число целое
 
 		if (cin.fail()) // ecли предыдущее извелечение оказлось неудачным,
 		{
@@ -204,6 +261,33 @@ long int checkdigit(bool param)
 		}
 	}
 }
+
+void checkdigit_f()
+{
+	using std::cout;
+	using std::cin;
+	while (true)
+	{
+		// вводим число, которое хотим представить в двоичной форме
+		if (format)
+			cin >> s::dig_db; // число целое
+		else
+			cin >> s::digit_f;
+
+		if (cin.fail()) // ecли предыдущее извелечение оказлось неудачным,
+		{
+			cin.clear(); // то возвращаем cin в обычный режим работы
+			cin.ignore(32767, '\n'); // и удаляем из буфера значения предыдущего ввода 
+			cout << "Недопустимое заданное число. Введите число правильно" << '\n';
+		}
+		else
+		{
+			cin.ignore(32767, '\n'); // удаляем из буфера значения предыдущего ввода 
+			return;
+		}
+	}
+}
+
 bool checkresult() // функция для проверки числа. Необходим для удобства использования функции для выполнения задания со сменой битов в числе
 {
 	bool result;
@@ -214,6 +298,7 @@ bool checkresult() // функция для проверки числа. Необходим для удобства использ
 	
 	return result;
 }
+
 void print_second_task(const unsigned short qual, int revers_array[], bool result, int number_of_bit, bool param) // функция для выполнения задания со сменой битов в числе
 {
 	using std::cout;
@@ -243,9 +328,10 @@ void print_second_task(const unsigned short qual, int revers_array[], bool resul
 		print_revers_array(qual, revers_array);
 	else
 		print_revers_array_f(qual, revers_array);
-	SetColor(7, 0); // возвращаем цвет шрифта в белый
+	SetColor(0, 7); // возвращаем цвет шрифта в белый
 	cout << "полученное значение = " << s::digit << '\n' << '\n';
 }
+
 int main()
 {
 	setlocale(0, ""); // локализация
@@ -253,7 +339,7 @@ int main()
 	using std::cin;
 	int number_of_bit = 0; // номер бита, которым производим сдвиг
 	bool result = checkresult(); // переменная, которая хранит значения преобразования после сдвига 
-	const unsigned short qual = 128; // обозначает разрядность будущего числа
+	const unsigned short qual = 64; // обозначает разрядность будущего числа
 	int revers_array[qual]; // массив, который хранит слепок числа в перевернутом виде
 	bool param = FALSE; // переменная, которая хранит формат числа - "0" - целое число, "1" - вещественное число
 
@@ -276,17 +362,29 @@ int main()
 	count_qual = 0; // обнуляем значение, на которое необходимо изменить заполнение массива 
 	cout << "___________________ II ЧАСТЬ - _____________________" << '\n';
 	cout << "               Вещественное число           " << '\n';
-	cout << "Введите неотрицательное вещественное число арабскими цифрами (Пример: 3.14, 15.0, 5251.432, 0.0): " << '\n';
-	checkdigit(param); // проверка числа
 	// выбираем формат значения
 	cout << "Выберите формат числа:" << '\n';
 	cout << "1 - float" << '\n';
 	cout << "2 - double" << '\n';
 	chooseFormat_f(); // функция проверки значения в зависимости от выбранного формата
-	mask_digit(qual, revers_array, number_of_bit, result); // функция создания слепка числа
-	print_revers_array_f(qual, revers_array); // функция вывода массива полученный значений, перевернув его
+	cout << "Введите неотрицательное вещественное число арабскими цифрами (Пример: 3.14, 15.0, 5251.432, 0.0): " << '\n';
+
+	checkdigit_f(); // проверка числа
+	
+	if (format)
+	{
+		mask_digit_f(qual, revers_array, number_of_bit, result); // функция создания слепка числа
+		print_revers_array_db(qual, revers_array); // функция вывода массива полученный значений, перевернув его
+	}
+	else
+	{
+		mask_digit(qual, revers_array, number_of_bit, result); // функция создания слепка числа
+		print_revers_array_f(qual, revers_array); // функция вывода массива полученный значений, перевернув его
+	}
 	//print_second_task(qual, revers_array, result, number_of_bit, param); // задание № 2
 	cout << '\n'; // пустая строка
 	
+	system("pause");
+
 	return 0;
 }
